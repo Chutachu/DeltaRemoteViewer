@@ -1,4 +1,4 @@
--- ✅ Delta RemoteEvent Viewer + Argumen Manual + Fire Langsung
+-- ✅ Delta RemoteEvent Viewer + Argumen Manual + Fire Langsung (Fix unpack bug)
 -- 🧠 Bisa langsung isi argumen dari GUI dan klik Fire untuk uji
 -- 🔍 Filter nama, log klik, dan bisa copy command ke clipboard
 
@@ -70,10 +70,11 @@ local selectedRemote = nil
 local function updateArg(argBoxText)
 	if not selectedRemote or not selectedRemote.Instance then return end
 	local remote = selectedRemote.Instance
-	local argsScript = "return function() return " .. argBoxText .. " end"
+	local argsScript = "return {" .. argBoxText .. "}"
 	local f = loadstring(argsScript)
 	if not f then warn("❌ Argumen tidak valid") return end
-	local args = f()
+	local successDecode, args = pcall(f)
+	if not successDecode then warn("⚠️ Gagal decode args:", args) return end
 	local success, err = pcall(function()
 		if remote:IsA("RemoteEvent") then
 			remote:FireServer(unpack(args))
