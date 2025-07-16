@@ -1,5 +1,5 @@
--- ✅ Delta RemoteEvent Viewer + Auto Test Delay-Safe + Remote Listener
--- 🔒 Kompatibel dengan Delta (tidak kena kick), delay auto test, UI ringan + listener untuk lihat argumen
+-- ✅ Delta RemoteEvent Viewer + Auto Test Delay-Safe + Remote Listener (Delay 2 Detik + Toggleable)
+-- 🔒 Kompatibel dengan Delta (tidak kena kick), delay auto test 2 detik, UI ringan + listener untuk lihat argumen
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -15,13 +15,13 @@ mainFrame.BorderSizePixel = 0
 mainFrame.Parent = gui
 
 local leftPanel = Instance.new("Frame")
-leftPanel.Size = UDim2.new(0.5, -5, 1, -40)
+leftPanel.Size = UDim2.new(0.5, -5, 1, -65)
 leftPanel.Position = UDim2.new(0, 5, 0, 35)
 leftPanel.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 leftPanel.Parent = mainFrame
 
 local rightPanel = Instance.new("Frame")
-rightPanel.Size = UDim2.new(0.5, -5, 1, -40)
+rightPanel.Size = UDim2.new(0.5, -5, 1, -65)
 rightPanel.Position = UDim2.new(0.5, 5, 0, 35)
 rightPanel.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 rightPanel.Parent = mainFrame
@@ -57,7 +57,7 @@ searchBox.Text = ""
 searchBox.Parent = leftPanel
 
 local scrollLeft = Instance.new("ScrollingFrame")
-scrollLeft.Size = UDim2.new(1, -10, 1, -65)
+scrollLeft.Size = UDim2.new(1, -10, 1, -100)
 scrollLeft.Position = UDim2.new(0, 5, 0, 35)
 scrollLeft.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollLeft.ScrollBarThickness = 4
@@ -66,12 +66,20 @@ scrollLeft.BorderSizePixel = 0
 scrollLeft.Parent = leftPanel
 
 local testBtn = Instance.new("TextButton")
-testBtn.Size = UDim2.new(1, -10, 0, 25)
-testBtn.Position = UDim2.new(0, 5, 1, -25)
+testBtn.Size = UDim2.new(0.5, -7, 0, 25)
+testBtn.Position = UDim2.new(0, 5, 1, -60)
 testBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-testBtn.Text = "🔁 Auto Test (Delay Mode)"
+testBtn.Text = "🔁 Mulai Auto Test"
 testBtn.TextColor3 = Color3.new(1, 1, 1)
 testBtn.Parent = leftPanel
+
+local stopBtn = Instance.new("TextButton")
+stopBtn.Size = UDim2.new(0.5, -7, 0, 25)
+stopBtn.Position = UDim2.new(0.5, 2, 1, -60)
+stopBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+stopBtn.Text = "⛔ Stop Auto Test"
+stopBtn.TextColor3 = Color3.new(1, 1, 1)
+stopBtn.Parent = leftPanel
 
 local input1 = Instance.new("TextBox")
 input1.PlaceholderText = "Argumen 1 (contoh: \"GoldenEgg\" / {a=1})"
@@ -106,6 +114,7 @@ scrollRight.Parent = rightPanel
 local yLeft, yRight = 5, 5
 local selectedRemote = nil
 local allButtons, remotesList = {}, {}
+local isTesting = false
 
 local function parse(str)
 	local f = loadstring("return " .. str)
@@ -183,17 +192,26 @@ searchBox:GetPropertyChangedSignal("Text"):Connect(function()
 end)
 
 testBtn.MouseButton1Click:Connect(function()
-	logRight("🔁 Auto Test Delay: " .. #remotesList .. " remotes")
+	if isTesting then return end
+	isTesting = true
+	logRight("🔁 Mulai Auto Test Delay: " .. #remotesList .. " remotes (2s)")
 	spawn(function()
 		for _, r in ipairs(remotesList) do
+			if not isTesting then break end
 			pcall(function()
 				r:FireServer("Auto", true)
 				logRight("✅ Fired: " .. r:GetFullName())
 			end)
-			task.wait(0.2)
+			task.wait(2)
 		end
 		logRight("🏁 Auto Test selesai!")
+		isTesting = false
 	end)
+end)
+
+stopBtn.MouseButton1Click:Connect(function()
+	isTesting = false
+	logRight("⛔ Auto Test dihentikan manual.")
 end)
 
 -- 🔍 Remote Listener: deteksi FireServer asli dari game
@@ -213,4 +231,4 @@ mt.__namecall = newcclosure(function(self, ...)
 end)
 setreadonly(mt, true)
 
-logRight("✅ GUI + Remote Listener aktif. Klik remote atau tunggu event terjadi.")
+logRight("✅ GUI + Remote Listener aktif. Klik remote atau gunakan fitur.")
