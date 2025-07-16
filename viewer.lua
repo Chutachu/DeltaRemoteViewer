@@ -1,10 +1,11 @@
--- ✅ Delta-Safe RemoteEvent Viewer GUI (Scroll + Trigger + Hide + Copy)
--- 🔒 Tidak auto-fire demi keamanan dan stabilitas Delta
--- ❗ Ketika klik tombol Remote, akan muncul popup command yang bisa di-copy manual
+-- ✅ Delta RemoteEvent & Function Viewer + Logger (Tanpa Key)
+-- 🧠 Versi mandiri mirip LimitHub, tapi tanpa sistem kunci
+-- 📜 Menampilkan dan mencatat semua RemoteEvent/RemoteFunction yang diklik
+-- 🧪 Disiapkan agar kamu bisa mengisi manual argumen trigger
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
-gui.Name = "RemoteScannerLite"
+gui.Name = "DeltaRemoteViewer"
 gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
@@ -18,7 +19,7 @@ holder.Parent = gui
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-title.Text = "📡 Remote Viewer (Delta Style)"
+title.Text = "📡 Delta Remote Viewer"
 title.TextScaled = true
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Parent = holder
@@ -28,7 +29,6 @@ scroll.Size = UDim2.new(1, 0, 1, -60)
 scroll.Position = UDim2.new(0, 0, 0, 35)
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scroll.ScrollBarThickness = 6
-scroll.ScrollBarImageTransparency = 0
 scroll.ScrollBarImageColor3 = Color3.new(1, 1, 1)
 scroll.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 scroll.BorderSizePixel = 0
@@ -48,26 +48,12 @@ end)
 
 local y = 5
 local total = 0
+local log = {}
 
-local function createPopup(remotePath, isEvent)
-	local popup = Instance.new("TextBox")
-	popup.Size = UDim2.new(1, -20, 0, 60)
-	popup.Position = UDim2.new(0, 10, 0, 10)
-	popup.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	popup.TextColor3 = Color3.new(1, 1, 1)
-	popup.ClearTextOnFocus = false
-	popup.TextWrapped = true
-	popup.TextYAlignment = Enum.TextYAlignment.Top
-	popup.Font = Enum.Font.Code
-	popup.TextSize = 14
-	popup.Text = isEvent
-		and ("game." .. remotePath .. ":FireServer(--[[ args here ]])")
-		or ("game." .. remotePath .. ":InvokeServer(--[[ args here ]])")
-	popup.Parent = holder
-
-	task.delay(6, function()
-		if popup then popup:Destroy() end
-	end)
+local function logRemote(remotePath, callType)
+	table.insert(log, callType .. ": game." .. remotePath .. "(...)\n")
+	print("\n📥 Copied:", "game." .. remotePath .. (callType == "Event" and ":FireServer(...)" or ":InvokeServer(...)"))
+	setclipboard("game." .. remotePath .. (callType == "Event" and ":FireServer(...)" or ":InvokeServer(...)"))
 end
 
 for _, v in ipairs(game:GetDescendants()) do
@@ -84,16 +70,14 @@ for _, v in ipairs(game:GetDescendants()) do
 
 		btn.MouseButton1Click:Connect(function()
 			if not v or not v.Parent then
-				warn("⚠️ Remote sudah tidak ada atau dipindahkan.")
+				warn("⚠️ Remote tidak ditemukan.")
 				return
 			end
-			createPopup(v:GetFullName(), v:IsA("RemoteEvent"))
+			logRemote(v:GetFullName(), v:IsA("RemoteEvent") and "Event" or "Function")
 		end)
-
 		y += 28
 	end
 end
 
 scroll.CanvasSize = UDim2.new(0, 0, 0, y + 5)
-print("✅ Loaded " .. total .. " RemoteEvent/Function(s). Klik tombol untuk lihat command siap copy.")
-
+print("✅ Loaded " .. total .. " Remote(s). Klik untuk copy & log trigger. Siapkan argumen manual di console.")
