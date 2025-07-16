@@ -1,6 +1,5 @@
--- ✅ Delta RemoteEvent Viewer + Argumen Manual + Fire Langsung (Fix unpack bug)
--- 🧠 Bisa langsung isi argumen dari GUI dan klik Fire untuk uji
--- 🔍 Filter nama, log klik, dan bisa copy command ke clipboard
+-- ✅ Delta RemoteEvent Viewer + Log + Input UI Split (Name + Jumlah)
+-- 🔍 Bisa pilih remote, input argumen (nama item & jumlah), lihat log langsung di GUI
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -9,8 +8,8 @@ gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
 local holder = Instance.new("Frame")
-holder.Size = UDim2.new(0, 500, 0, 400)
-holder.Position = UDim2.new(1, -510, 0.5, -200)
+holder.Size = UDim2.new(0, 500, 0, 500)
+holder.Position = UDim2.new(1, -510, 0.5, -250)
 holder.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 holder.BorderSizePixel = 0
 holder.Parent = gui
@@ -18,7 +17,7 @@ holder.Parent = gui
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-title.Text = "📡 Delta Remote Viewer + Fire Arg"
+title.Text = "📡 Delta Remote Viewer (UI Split + Log)"
 title.TextScaled = true
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Parent = holder
@@ -33,24 +32,48 @@ searchBox.ClearTextOnFocus = false
 searchBox.Text = ""
 searchBox.Parent = holder
 
-local argBox = Instance.new("TextBox")
-argBox.PlaceholderText = "🧪 Contoh: 'GoldenEgg', 1"
-argBox.Size = UDim2.new(1, -20, 0, 25)
-argBox.Position = UDim2.new(0, 10, 0, 65)
-argBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-argBox.TextColor3 = Color3.new(1, 1, 1)
-argBox.ClearTextOnFocus = false
-argBox.Text = ""
-argBox.Parent = holder
+local itemBox = Instance.new("TextBox")
+itemBox.PlaceholderText = "🧪 Nama item: 'GoldenEgg'"
+itemBox.Size = UDim2.new(1, -20, 0, 25)
+itemBox.Position = UDim2.new(0, 10, 0, 65)
+itemBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+itemBox.TextColor3 = Color3.new(1, 1, 1)
+itemBox.ClearTextOnFocus = false
+itemBox.Text = ""
+itemBox.Parent = holder
+
+local jumlahBox = Instance.new("TextBox")
+jumlahBox.PlaceholderText = "🔢 Jumlah / ID tambahan"
+jumlahBox.Size = UDim2.new(1, -20, 0, 25)
+jumlahBox.Position = UDim2.new(0, 10, 0, 95)
+jumlahBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+jumlahBox.TextColor3 = Color3.new(1, 1, 1)
+jumlahBox.ClearTextOnFocus = false
+jumlahBox.Text = ""
+jumlahBox.Parent = holder
 
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, 0, 1, -125)
-scroll.Position = UDim2.new(0, 0, 0, 95)
+scroll.Size = UDim2.new(1, 0, 0.5, -30)
+scroll.Position = UDim2.new(0, 0, 0, 130)
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scroll.ScrollBarThickness = 6
 scroll.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 scroll.BorderSizePixel = 0
 scroll.Parent = holder
+
+local logBox = Instance.new("TextLabel")
+logBox.Size = UDim2.new(1, -20, 0.5, -50)
+logBox.Position = UDim2.new(0, 10, 0.5, 10)
+logBox.Text = "[LOG]"
+logBox.TextWrapped = true
+logBox.TextXAlignment = Enum.TextXAlignment.Left
+logBox.TextYAlignment = Enum.TextYAlignment.Top
+logBox.BackgroundColor3 = Color3.fromRGB(5, 5, 5)
+logBox.TextColor3 = Color3.fromRGB(100, 255, 100)
+logBox.Font = Enum.Font.Code
+logBox.TextSize = 14
+logBox.ClipsDescendants = true
+logBox.Parent = holder
 
 local close = Instance.new("TextButton")
 close.Size = UDim2.new(0, 100, 0, 25)
@@ -67,25 +90,28 @@ end)
 local allButtons = {}
 local selectedRemote = nil
 
-local function updateArg(argBoxText)
-	if not selectedRemote or not selectedRemote.Instance then return end
+local function log(msg)
+	logBox.Text = logBox.Text .. "\n" .. os.date("[%H:%M:%S] ") .. msg
+end
+
+local function fireSelectedRemote()
+	if not selectedRemote or not selectedRemote.Instance then log("❌ Tidak ada Remote yang dipilih") return end
 	local remote = selectedRemote.Instance
-	local argsScript = "return {" .. argBoxText .. "}"
-	local f = loadstring(argsScript)
-	if not f then warn("❌ Argumen tidak valid") return end
-	local successDecode, args = pcall(f)
-	if not successDecode then warn("⚠️ Gagal decode args:", args) return end
+	local item = itemBox.Text
+	local jumlah = tonumber(jumlahBox.Text) or jumlahBox.Text
+
 	local success, err = pcall(function()
 		if remote:IsA("RemoteEvent") then
-			remote:FireServer(unpack(args))
+			remote:FireServer(item, jumlah)
 		elseif remote:IsA("RemoteFunction") then
-			remote:InvokeServer(unpack(args))
+			remote:InvokeServer(item, jumlah)
 		end
 	end)
+
 	if success then
-		print("✅ Fired:", remote:GetFullName())
+		log("✅ Fired " .. remote.Name .. " dengan argumen: " .. tostring(item) .. ", " .. tostring(jumlah))
 	else
-		warn("⚠️ Gagal:", err)
+		log("❌ Gagal trigger: " .. tostring(err))
 	end
 end
 
@@ -99,7 +125,7 @@ local function createButton(v)
 	btn.Parent = scroll
 	btn.MouseButton1Click:Connect(function()
 		selectedRemote = {Instance = v}
-		print("📌 Remote dipilih:", v:GetFullName())
+		log("📌 Remote dipilih: " .. v:GetFullName())
 	end)
 	table.insert(allButtons, {button = btn, remote = v})
 end
@@ -127,7 +153,6 @@ end
 searchBox:GetPropertyChangedSignal("Text"):Connect(refreshButtons)
 refreshButtons()
 
--- Tombol FIRE
 local fireBtn = Instance.new("TextButton")
 fireBtn.Size = UDim2.new(0, 100, 0, 25)
 fireBtn.Position = UDim2.new(0, 10, 1, -30)
@@ -135,9 +160,6 @@ fireBtn.Text = "🔥 Fire"
 fireBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
 fireBtn.TextColor3 = Color3.new(1, 1, 1)
 fireBtn.Parent = holder
+fireBtn.MouseButton1Click:Connect(fireSelectedRemote)
 
-fireBtn.MouseButton1Click:Connect(function()
-	updateArg(argBox.Text)
-end)
-
-print("✅ GUI siap. Pilih Remote, isi argumen, klik 🔥 Fire!")
+log("✅ GUI siap. Pilih Remote, isi item + jumlah, lalu klik 🔥 Fire")
