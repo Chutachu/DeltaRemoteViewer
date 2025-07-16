@@ -1,9 +1,9 @@
--- ✅ Delta RemoteEvent Viewer + Auto Test Button + Argumen UI + Log (vFinal)
--- 🔧 Versi UI modern minimalis, argumen kompleks, auto test, scroll fix untuk Delta compatibility
+-- ✅ Delta RemoteEvent Viewer + Auto Test Delay-Safe + Remote Listener
+-- 🔒 Kompatibel dengan Delta (tidak kena kick), delay auto test, UI ringan + listener untuk lihat argumen
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
-gui.Name = "DeltaRemoteViewer"
+gui.Name = "DeltaSafeViewer"
 gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
@@ -30,7 +30,7 @@ local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-title.Text = "🔍 Delta Remote Viewer UI"
+title.Text = "📡 Delta Remote Viewer (Safe + Listener Mode)"
 title.TextScaled = true
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Parent = mainFrame
@@ -47,7 +47,7 @@ close.MouseButton1Click:Connect(function()
 end)
 
 local searchBox = Instance.new("TextBox")
-searchBox.PlaceholderText = "🔍 Search remote name..."
+searchBox.PlaceholderText = "🔍 Cari remote..."
 searchBox.Size = UDim2.new(1, -10, 0, 25)
 searchBox.Position = UDim2.new(0, 5, 0, 5)
 searchBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
@@ -69,12 +69,12 @@ local testBtn = Instance.new("TextButton")
 testBtn.Size = UDim2.new(1, -10, 0, 25)
 testBtn.Position = UDim2.new(0, 5, 1, -25)
 testBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
-testBtn.Text = "🔁 Auto Test All Remotes"
+testBtn.Text = "🔁 Auto Test (Delay Mode)"
 testBtn.TextColor3 = Color3.new(1, 1, 1)
 testBtn.Parent = leftPanel
 
 local input1 = Instance.new("TextBox")
-input1.PlaceholderText = "Argumen 1 (contoh: GoldenEgg / {a=1})"
+input1.PlaceholderText = "Argumen 1 (contoh: \"GoldenEgg\" / {a=1})"
 input1.Size = UDim2.new(1, -10, 0, 25)
 input1.Position = UDim2.new(0, 5, 0, 5)
 input1.BackgroundColor3 = Color3.fromRGB(20,20,20)
@@ -103,53 +103,47 @@ scrollRight.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 scrollRight.BorderSizePixel = 0
 scrollRight.Parent = rightPanel
 
-local allButtons = {}
-local remotesList = {}
+local yLeft, yRight = 5, 5
 local selectedRemote = nil
-local yLeft = 5
-local yRight = 5
+local allButtons, remotesList = {}, {}
 
 local function parse(str)
-	local f, err = loadstring("return " .. str)
-	if f then
-		local success, result = pcall(f)
-		if success then return result end
-	end
+	local f = loadstring("return " .. str)
+	if f then local s,r = pcall(f); if s then return r end end
 	return str
 end
 
-local function logRight(msg)
-	local label = Instance.new("TextLabel")
-	label.Size = UDim2.new(0, 10, 0, 20)
-	label.AutomaticSize = Enum.AutomaticSize.X
-	label.Position = UDim2.new(0, 5, 0, yRight)
-	label.BackgroundTransparency = 1
-	label.TextColor3 = Color3.new(1, 1, 1)
-	label.Text = os.date("[%H:%M:%S] ") .. msg
-	label.Font = Enum.Font.Code
-	label.TextSize = 14
-	label.TextXAlignment = Enum.TextXAlignment.Left
-	label.TextWrapped = false
-	label.Parent = scrollRight
+local function logRight(text)
+	local lbl = Instance.new("TextLabel")
+	lbl.Size = UDim2.new(0, 10, 0, 20)
+	lbl.AutomaticSize = Enum.AutomaticSize.X
+	lbl.Position = UDim2.new(0, 5, 0, yRight)
+	lbl.BackgroundTransparency = 1
+	lbl.Text = os.date("[%H:%M:%S] ") .. text
+	lbl.TextColor3 = Color3.new(1,1,1)
+	lbl.Font = Enum.Font.Code
+	lbl.TextSize = 14
+	lbl.TextXAlignment = Enum.TextXAlignment.Left
+	lbl.TextWrapped = false
+	lbl.Parent = scrollRight
 	yRight += 22
 	scrollRight.CanvasSize = UDim2.new(0, 1000, 0, yRight + 30)
 end
 
 local function fireRemote(v)
-	logRight("🔧 Fire: " .. v:GetFullName())
-	local a1 = parse(input1.Text)
-	local a2 = parse(input2.Text)
-	local success, err = pcall(function()
+	logRight("🧪 Firing: " .. v:GetFullName())
+	local a1, a2 = parse(input1.Text), parse(input2.Text)
+	local ok, err = pcall(function()
 		v:FireServer(a1, a2)
 	end)
-	if success then
+	if ok then
 		logRight("✅ Success: " .. v.Name)
 	else
 		logRight("❌ Error: " .. tostring(err))
 	end
 end
 
-local function createButton(v)
+local function createBtn(v)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 25)
 	btn.Position = UDim2.new(0, 5, 0, yLeft)
@@ -160,7 +154,7 @@ local function createButton(v)
 	btn.Parent = scrollLeft
 	btn.MouseButton1Click:Connect(function()
 		selectedRemote = v
-		logRight("📌 Selected: " .. v:GetFullName())
+		logRight("➡️ Dipilih: " .. v:GetFullName())
 		fireRemote(v)
 	end)
 	yLeft += 28
@@ -170,16 +164,15 @@ local function createButton(v)
 end
 
 for _, v in ipairs(game:GetDescendants()) do
-	if v:IsA("RemoteEvent") or v:IsA("RemoteFunction") then
-		createButton(v)
+	if v:IsA("RemoteEvent") then
+		createBtn(v)
 	end
 end
 
 searchBox:GetPropertyChangedSignal("Text"):Connect(function()
 	yLeft = 5
 	for _, data in ipairs(allButtons) do
-		local name = data.remote.Name:lower()
-		local match = searchBox.Text == "" or name:find(searchBox.Text:lower())
+		local match = searchBox.Text == "" or data.remote.Name:lower():find(searchBox.Text:lower())
 		data.button.Visible = match
 		if match then
 			data.button.Position = UDim2.new(0, 5, 0, yLeft)
@@ -190,14 +183,34 @@ searchBox:GetPropertyChangedSignal("Text"):Connect(function()
 end)
 
 testBtn.MouseButton1Click:Connect(function()
-	logRight("🚀 Auto Testing " .. #remotesList .. " remotes...")
-	for _, r in ipairs(remotesList) do
-		pcall(function()
-			r:FireServer("AutoTest", 123)
-			logRight("✅ Fired: " .. r:GetFullName())
-		end)
-	end
-	logRight("✅ Auto Test selesai.")
+	logRight("🔁 Auto Test Delay: " .. #remotesList .. " remotes")
+	spawn(function()
+		for _, r in ipairs(remotesList) do
+			pcall(function()
+				r:FireServer("Auto", true)
+				logRight("✅ Fired: " .. r:GetFullName())
+			end)
+			task.wait(0.2)
+		end
+		logRight("🏁 Auto Test selesai!")
+	end)
 end)
 
-logRight("✅ UI Ready. Klik remote atau gunakan Auto Test!")
+-- 🔍 Remote Listener: deteksi FireServer asli dari game
+local mt = getrawmetatable(game)
+local old = mt.__namecall
+setreadonly(mt, false)
+mt.__namecall = newcclosure(function(self, ...)
+	local method = getnamecallmethod()
+	if tostring(method) == "FireServer" and typeof(self) == "Instance" then
+		logRight("📡 Detected: " .. self:GetFullName())
+		local args = {...}
+		for i,v in ipairs(args) do
+			logRight("  Arg ["..i.."]: " .. tostring(v))
+		end
+	end
+	return old(self, ...)
+end)
+setreadonly(mt, true)
+
+logRight("✅ GUI + Remote Listener aktif. Klik remote atau tunggu event terjadi.")
