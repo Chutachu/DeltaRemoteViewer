@@ -1,6 +1,6 @@
--- ✅ Delta RemoteEvent & Function Viewer + Logger + Filter + Dummy Arg
--- 🧠 Versi mandiri mirip LimitHub, tanpa key
--- 🔍 Dilengkapi pencarian nama remote & auto-gen argumen dummy
+-- ✅ Delta RemoteEvent Viewer + Argumen Manual + Fire Langsung
+-- 🧠 Bisa langsung isi argumen dari GUI dan klik Fire untuk uji
+-- 🔍 Filter nama, log klik, dan bisa copy command ke clipboard
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -9,8 +9,8 @@ gui.ResetOnSpawn = false
 gui.Parent = plr:WaitForChild("PlayerGui")
 
 local holder = Instance.new("Frame")
-holder.Size = UDim2.new(0, 500, 0, 350)
-holder.Position = UDim2.new(1, -510, 0.5, -175)
+holder.Size = UDim2.new(0, 500, 0, 400)
+holder.Position = UDim2.new(1, -510, 0.5, -200)
 holder.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 holder.BorderSizePixel = 0
 holder.Parent = gui
@@ -18,7 +18,7 @@ holder.Parent = gui
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0, 30)
 title.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-title.Text = "📡 Delta Remote Viewer + Filter"
+title.Text = "📡 Delta Remote Viewer + Fire Arg"
 title.TextScaled = true
 title.TextColor3 = Color3.new(1, 1, 1)
 title.Parent = holder
@@ -33,9 +33,19 @@ searchBox.ClearTextOnFocus = false
 searchBox.Text = ""
 searchBox.Parent = holder
 
+local argBox = Instance.new("TextBox")
+argBox.PlaceholderText = "🧪 Contoh: 'GoldenEgg', 1"
+argBox.Size = UDim2.new(1, -20, 0, 25)
+argBox.Position = UDim2.new(0, 10, 0, 65)
+argBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+argBox.TextColor3 = Color3.new(1, 1, 1)
+argBox.ClearTextOnFocus = false
+argBox.Text = ""
+argBox.Parent = holder
+
 local scroll = Instance.new("ScrollingFrame")
-scroll.Size = UDim2.new(1, 0, 1, -100)
-scroll.Position = UDim2.new(0, 0, 0, 65)
+scroll.Size = UDim2.new(1, 0, 1, -125)
+scroll.Position = UDim2.new(0, 0, 0, 95)
 scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 scroll.ScrollBarThickness = 6
 scroll.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
@@ -55,17 +65,27 @@ close.MouseButton1Click:Connect(function()
 end)
 
 local allButtons = {}
-local log = {}
+local selectedRemote = nil
 
-local function dummyArgs()
-	return '"example", 123, true'
-end
-
-local function logRemote(remotePath, callType)
-	local call = "game." .. remotePath .. (callType == "Event" and ":FireServer(" .. dummyArgs() .. ")" or ":InvokeServer(" .. dummyArgs() .. ")")
-	table.insert(log, call)
-	print("\n📥 Copied:", call)
-	setclipboard(call)
+local function updateArg(argBoxText)
+	if not selectedRemote or not selectedRemote.Instance then return end
+	local remote = selectedRemote.Instance
+	local argsScript = "return function() return " .. argBoxText .. " end"
+	local f = loadstring(argsScript)
+	if not f then warn("❌ Argumen tidak valid") return end
+	local args = f()
+	local success, err = pcall(function()
+		if remote:IsA("RemoteEvent") then
+			remote:FireServer(unpack(args))
+		elseif remote:IsA("RemoteFunction") then
+			remote:InvokeServer(unpack(args))
+		end
+	end)
+	if success then
+		print("✅ Fired:", remote:GetFullName())
+	else
+		warn("⚠️ Gagal:", err)
+	end
 end
 
 local function createButton(v)
@@ -77,11 +97,8 @@ local function createButton(v)
 	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 	btn.Parent = scroll
 	btn.MouseButton1Click:Connect(function()
-		if not v or not v.Parent then
-			warn("⚠️ Remote tidak ditemukan.")
-			return
-		end
-		logRemote(v:GetFullName(), v:IsA("RemoteEvent") and "Event" or "Function")
+		selectedRemote = {Instance = v}
+		print("📌 Remote dipilih:", v:GetFullName())
 	end)
 	table.insert(allButtons, {button = btn, remote = v})
 end
@@ -108,4 +125,18 @@ end
 
 searchBox:GetPropertyChangedSignal("Text"):Connect(refreshButtons)
 refreshButtons()
-print("✅ Viewer ready. Klik remote untuk salin command dengan argumen dummy.")
+
+-- Tombol FIRE
+local fireBtn = Instance.new("TextButton")
+fireBtn.Size = UDim2.new(0, 100, 0, 25)
+fireBtn.Position = UDim2.new(0, 10, 1, -30)
+fireBtn.Text = "🔥 Fire"
+fireBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+fireBtn.TextColor3 = Color3.new(1, 1, 1)
+fireBtn.Parent = holder
+
+fireBtn.MouseButton1Click:Connect(function()
+	updateArg(argBox.Text)
+end)
+
+print("✅ GUI siap. Pilih Remote, isi argumen, klik 🔥 Fire!")
