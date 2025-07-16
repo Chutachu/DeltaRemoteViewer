@@ -1,6 +1,5 @@
--- ✅ Delta RemoteEvent Viewer + Argumen UI + Log + Egg Scanner UI
--- 🔍 Versi UI modern minimalis, posisi kiri-kanan terpisah, bisa scroll, bisa deteksi args
--- 🧪 Bisa untuk eksplor trigger BuyPetEgg & aktivasinya
+-- ✅ Delta RemoteEvent Viewer + Argumen UI + Log + Egg Scanner UI (vFinal)
+-- 🔍 Versi UI modern minimalis kiri-kanan, input argumen, scroll log, dan FireServer test
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -66,11 +65,33 @@ scrollLeft.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 scrollLeft.BorderSizePixel = 0
 scrollLeft.Parent = leftPanel
 
+local input1 = Instance.new("TextBox")
+input1.PlaceholderText = "Argumen 1 (contoh: GoldenEgg)"
+input1.Size = UDim2.new(1, -10, 0, 25)
+input1.Position = UDim2.new(0, 5, 0, 5)
+input1.BackgroundColor3 = Color3.fromRGB(20,20,20)
+input1.TextColor3 = Color3.new(1,1,1)
+input1.Text = ""
+input1.ClearTextOnFocus = false
+input1.Parent = rightPanel
+
+local input2 = Instance.new("TextBox")
+input2.PlaceholderText = "Argumen 2 (contoh: 1)"
+input2.Size = UDim2.new(1, -10, 0, 25)
+input2.Position = UDim2.new(0, 5, 0, 35)
+input2.BackgroundColor3 = Color3.fromRGB(20,20,20)
+input2.TextColor3 = Color3.new(1,1,1)
+input2.Text = ""
+input2.ClearTextOnFocus = false
+input2.Parent = rightPanel
+
 local scrollRight = Instance.new("ScrollingFrame")
-scrollRight.Size = UDim2.new(1, -10, 1, -35)
-scrollRight.Position = UDim2.new(0, 5, 0, 5)
+scrollRight.Size = UDim2.new(1, -10, 1, -70)
+scrollRight.Position = UDim2.new(0, 5, 0, 65)
 scrollRight.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollRight.ScrollBarThickness = 4
+scrollRight.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollRight.ScrollBarInset = Enum.ScrollBarInset.ScrollBar
 scrollRight.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 scrollRight.BorderSizePixel = 0
 scrollRight.Parent = rightPanel
@@ -92,13 +113,13 @@ local function logRight(msg)
 	label.TextXAlignment = Enum.TextXAlignment.Left
 	label.Parent = scrollRight
 	yRight += 22
-	scrollRight.CanvasSize = UDim2.new(0, 0, 0, yRight)
+	scrollRight.CanvasSize = UDim2.new(0, 0, 0, yRight + 30)
 end
 
 local function fireRemote(v)
 	logRight("🔧 Fire attempt: " .. v:GetFullName())
 	local success, err = pcall(function()
-		v:FireServer("TestArg", 1, true)
+		v:FireServer(input1.Text, tonumber(input2.Text), true)
 	end)
 	if success then
 		logRight("✅ Success: " .. v.Name)
