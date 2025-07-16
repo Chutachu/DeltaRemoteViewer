@@ -1,5 +1,5 @@
--- ✅ Delta RemoteEvent Viewer + Argumen UI + Log + Egg Scanner UI (vFinal Fix)
--- 🔧 Versi UI modern minimalis, argumen kompleks, fix ScrollBarInset error untuk Delta compatibility
+-- ✅ Delta RemoteEvent Viewer + Auto Test Button + Argumen UI + Log (vFinal)
+-- 🔧 Versi UI modern minimalis, argumen kompleks, auto test, scroll fix untuk Delta compatibility
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -57,13 +57,21 @@ searchBox.Text = ""
 searchBox.Parent = leftPanel
 
 local scrollLeft = Instance.new("ScrollingFrame")
-scrollLeft.Size = UDim2.new(1, -10, 1, -35)
+scrollLeft.Size = UDim2.new(1, -10, 1, -65)
 scrollLeft.Position = UDim2.new(0, 5, 0, 35)
 scrollLeft.CanvasSize = UDim2.new(0, 0, 0, 0)
 scrollLeft.ScrollBarThickness = 4
 scrollLeft.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 scrollLeft.BorderSizePixel = 0
 scrollLeft.Parent = leftPanel
+
+local testBtn = Instance.new("TextButton")
+testBtn.Size = UDim2.new(1, -10, 0, 25)
+testBtn.Position = UDim2.new(0, 5, 1, -25)
+testBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200)
+testBtn.Text = "🔁 Auto Test All Remotes"
+testBtn.TextColor3 = Color3.new(1, 1, 1)
+testBtn.Parent = leftPanel
 
 local input1 = Instance.new("TextBox")
 input1.PlaceholderText = "Argumen 1 (contoh: GoldenEgg / {a=1})"
@@ -96,6 +104,7 @@ scrollRight.BorderSizePixel = 0
 scrollRight.Parent = rightPanel
 
 local allButtons = {}
+local remotesList = {}
 local selectedRemote = nil
 local yLeft = 5
 local yRight = 5
@@ -127,7 +136,7 @@ local function logRight(msg)
 end
 
 local function fireRemote(v)
-	logRight("🔧 Fire attempt: " .. v:GetFullName())
+	logRight("🔧 Fire: " .. v:GetFullName())
 	local a1 = parse(input1.Text)
 	local a2 = parse(input2.Text)
 	local success, err = pcall(function()
@@ -136,7 +145,7 @@ local function fireRemote(v)
 	if success then
 		logRight("✅ Success: " .. v.Name)
 	else
-		logRight("❌ Failed: " .. tostring(err))
+		logRight("❌ Error: " .. tostring(err))
 	end
 end
 
@@ -157,6 +166,7 @@ local function createButton(v)
 	yLeft += 28
 	scrollLeft.CanvasSize = UDim2.new(0, 0, 0, yLeft)
 	table.insert(allButtons, {button = btn, remote = v})
+	table.insert(remotesList, v)
 end
 
 for _, v in ipairs(game:GetDescendants()) do
@@ -179,4 +189,15 @@ searchBox:GetPropertyChangedSignal("Text"):Connect(function()
 	scrollLeft.CanvasSize = UDim2.new(0, 0, 0, yLeft)
 end)
 
-logRight("✅ UI Initialized. Klik remote untuk tes trigger dan lihat log di kanan.")
+testBtn.MouseButton1Click:Connect(function()
+	logRight("🚀 Auto Testing " .. #remotesList .. " remotes...")
+	for _, r in ipairs(remotesList) do
+		pcall(function()
+			r:FireServer("AutoTest", 123)
+			logRight("✅ Fired: " .. r:GetFullName())
+		end)
+	end
+	logRight("✅ Auto Test selesai.")
+end)
+
+logRight("✅ UI Ready. Klik remote atau gunakan Auto Test!")
