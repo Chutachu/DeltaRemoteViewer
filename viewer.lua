@@ -1,5 +1,5 @@
--- ✅ Delta RemoteEvent Viewer + Argumen UI + Log + Egg Scanner UI (vFinal)
--- 🔍 Versi UI modern minimalis kiri-kanan, input argumen kompleks, scroll log X/Y, dan FireServer test
+-- ✅ Delta RemoteEvent Viewer + Argumen UI + Log + Egg Scanner UI (vFinal Fix)
+-- 🔧 Versi UI modern minimalis, argumen kompleks, fix ScrollBarInset error untuk Delta compatibility
 
 local plr = game.Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
@@ -89,11 +89,8 @@ local scrollRight = Instance.new("ScrollingFrame")
 scrollRight.Size = UDim2.new(1, -10, 1, -70)
 scrollRight.Position = UDim2.new(0, 5, 0, 65)
 scrollRight.CanvasSize = UDim2.new(0, 1000, 0, 0)
-scrollRight.AutomaticCanvasSize = Enum.AutomaticSize.XY
 scrollRight.ScrollingDirection = Enum.ScrollingDirection.XY
 scrollRight.ScrollBarThickness = 4
-scrollRight.ScrollBarInset = Enum.ScrollBarInset.ScrollBar
-scrollRight.ClipsDescendants = true
 scrollRight.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
 scrollRight.BorderSizePixel = 0
 scrollRight.Parent = rightPanel
